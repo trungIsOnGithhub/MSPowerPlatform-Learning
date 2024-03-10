@@ -1,0 +1,96 @@
+<div class="filter-container">
+    <h5>Filter</h5>
+
+    <mat-form-field>
+        <mat-label>Year</mat-label>
+        <mat-select [formControl]="summaryYearFilterControl">
+            <mat-option *ngFor="let item of leaveYears" [value]="item.year">
+                {{ item.year }}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <button class="btn btn-secondary btn-sm reset-filter-btn" (click)="resetFiltersValue()">Reset Filter</button>
+</div>
+
+<!-- <table class="table table-hover" *ngIf="!isLoadingSummary">
+    <thead>
+        <th scope="col">
+            Avatar
+        </th>
+        <th scope="col">
+            Employee
+        </th>
+       <th *ngFor="let leaveType of leaveTypeInfos" scope="col">
+            {{ leaveType.typename }} / Total
+       </th> 
+    </thead>
+
+    <tr *ngFor="let leaveTrack of filteredSummaryData | slice:
+        (paginator.pageIndex * paginator.pageSize):
+        ((paginator.pageIndex+1) * paginator.pageSize)" scope="row">
+        <td>
+            <app-user-icon [user]="leaveTrack['user']"></app-user-icon>
+        </td>
+        <td>
+            {{ leaveTrack['user']['name'] }}
+        </td>
+        <td *ngFor="let leaveType of leaveTypeInfos">
+            {{ leaveTrack[leaveType.typename] ? leaveTrack[leaveType.typename].totalLeaveDay - leaveTrack[leaveType.typename].remainLeaveDay : 0 }} / {{
+                leaveTrack[leaveType.typename] ? (leaveTrack[leaveType.typename].totalLeaveDay) : leaveType.baseNumberOfDay
+            }}
+        </td>
+    </tr>
+</table> -->
+
+
+<mat-table
+    #table
+    [dataSource]="dataSource"
+    class="table"
+>
+    <ng-container matColumnDef="Avatar">
+        <mat-header-cell class="header-cell" *matHeaderCellDef>
+            Avatar
+        </mat-header-cell>
+
+        <mat-cell *matCellDef="let leaveTrack;" class="row-cell">
+            <app-user-icon [user]="leaveTrack['user']"></app-user-icon>
+        </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="Employee">
+        <mat-header-cell class="header-cell" *matHeaderCellDef>
+            Employee
+        </mat-header-cell>p
+
+        <mat-cell *matCellDef="let leaveTrack;" class="row-cell">
+            {{ leaveTrack['user']['name'] }}
+        </mat-cell>
+    </ng-container>
+
+    <ng-container *ngFor="let leaveType of leaveTypeInfos; index as i;" [matColumnDef]="leaveType.typename">
+        <mat-header-cell *matHeaderCellDef class="header-cell">
+            {{ leaveType.typename }} / Total
+        </mat-header-cell>
+
+        <mat-cell *matCellDef="let leaveTrack;" class="row-cell">
+            {{ leaveTrack[leaveType.typename] ? leaveTrack[leaveType.typename].totalLeaveDay - leaveTrack[leaveType.typename].remainLeaveDay : 0 }} / {{
+                leaveTrack[leaveType.typename] ? (leaveTrack[leaveType.typename].totalLeaveDay) : leaveType.baseNumberOfDay
+            }}
+        </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+</mat-table>
+
+
+<h6 *ngIf="!isLoadingSummary && filteredSummaryData.length === 0" style="text-align: center;padding: 1em;">There is nothing to show</h6>
+
+<mat-paginator
+    #paginator
+    [pageSize]="pageSizes[0]"
+    [pageSizeOptions]="pageSizes"
+    showFirstLastButtons>
+</mat-paginator>

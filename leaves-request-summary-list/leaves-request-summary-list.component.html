@@ -1,0 +1,166 @@
+<div id="summary-page">
+    <div>
+      <mat-tab-group>
+
+        <mat-tab label="MY REQUESTS">
+            <div class="filter-container">
+                <h5>Filter</h5>
+
+                <mat-form-field>
+                    <mat-label>Leave Type</mat-label>
+                    <mat-select [formControl]="leaveTypeFilterControl">
+                        <mat-option *ngFor="let leaveType of leaveTypes" [value]="leaveType.id">
+                            {{ leaveType.leaveTypeLocalizations[0].name }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field>
+                    <mat-label>Leave Status</mat-label>
+                    <mat-select [formControl]="leaveStatusFilterControl">
+                        <mat-option *ngFor="let leaveStatus of approvalStatusValuesMap" [value]="leaveStatus.value">
+                            {{ leaveStatus.viewValue }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Start Date</mat-label>
+                    <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+                    <mat-datepicker #picker1></mat-datepicker>
+                    <input matInput [matDatepicker]="picker1" placeholder="DD/MM/YYYY" [formControl]="startDateFilterControl" onkeydown="return false">
+                </mat-form-field>
+
+                <mat-form-field>
+                    <mat-label>End Date</mat-label>
+                    <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+                    <mat-datepicker #picker2></mat-datepicker>
+                    <input matInput [matDatepicker]="picker2" placeholder="DD/MM/YYYY" [formControl]="endDateFilterControl" onkeydown="return false">
+                </mat-form-field>
+
+                <button class="btn btn-secondary btn-sm reset-filter-btn" (click)="resetFilterValue()">Reset Filter And Sort</button>
+            </div>
+                <div class="d-flex justify-content-center" *ngIf="isLoadingLeaveTypes && isLoading">
+                    <div class="spinner-border text-primary" role="status" >
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+
+                <mat-table
+                    #table
+                    [dataSource]="filteredData"
+                    class="table"
+                >
+                <ng-container matColumnDef="Avatar">
+                    <mat-header-cell class="header-cell" *matHeaderCellDef>
+                      Avatar
+                    </mat-header-cell>
+
+                    <mat-cell *matCellDef="let request;">
+                        <app-user-icon [user]="request['requester']"></app-user-icon>
+                    </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="Requester">
+                  <mat-header-cell class="header-cell" *matHeaderCellDef>
+                    Requester
+                  </mat-header-cell>
+                  <mat-cell *matCellDef="let request;" class="row-cell">
+                        {{ request['requester']['displayName'] }}
+                  </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="StartDate">
+                  <mat-header-cell class="header-cell" *matHeaderCellDef>
+                    <a class="unsorted" *ngIf="(currentFilter.orderBy !== 'startDate')" (click)="applySortPropAndOrder('startDate', 'asc')">Start Date</a>
+                    <a class="ascending-sorted" *ngIf="(currentFilter.sortOrder === 'asc' && currentFilter.orderBy === 'startDate')"  (click)="applySortPropAndOrder('startDate', 'desc')">Start Date</a>
+                    <a class="descending-sorted" *ngIf="(currentFilter.sortOrder === 'desc' && currentFilter.orderBy === 'startDate')" (click)="applySortPropAndOrder('', '')">Start Date</a>
+                  </mat-header-cell>
+
+                  <mat-cell class="input-name" *matCellDef="let request" class="row-cell">
+                    {{ request['startDate'] | date }}
+                  </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="EndDate">
+                    <mat-header-cell class="header-cell" *matHeaderCellDef>
+                        <a class="unsorted" *ngIf="(currentFilter.orderBy !== 'endDate')" (click)="applySortPropAndOrder('endDate', 'asc')">End Date</a>
+                        <a class="ascending-sorted" *ngIf="(currentFilter.sortOrder === 'asc' && currentFilter.orderBy === 'endDate')"  (click)="applySortPropAndOrder('endDate', 'desc')">End Date</a>
+                        <a class="descending-sorted" *ngIf="(currentFilter.sortOrder === 'desc' && currentFilter.orderBy === 'endDate')" (click)="applySortPropAndOrder('', '')">End Date</a>
+                    </mat-header-cell>
+
+                    <mat-cell *matCellDef="let request" class="row-cell">
+                        {{ request['endDate'] | date }}
+                    </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="LeaveType">
+                    <mat-header-cell class="header-cell" *matHeaderCellDef>
+                        Leave Type
+                    </mat-header-cell>
+
+                    <mat-cell *matCellDef="let request;" class="row-cell">
+                        {{ request['leaveType']['leaveTypeLocalizations'][0].name }}
+                    </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="LeaveStatus">
+                    <mat-header-cell class="header-cell" *matHeaderCellDef>
+                        Leave Status
+                    </mat-header-cell>
+
+                    <mat-cell *matCellDef="let request; index as i" class="row-cell">
+                        <div
+                            [style.background-color]="request['status'] === 1 ? 'limegreen' : (request['status'] === 2 ? 'indianred' : 'none')"
+                            style="padding: 0.5rem;"
+                        >
+                            {{ approvalStatusValuesMap[request['status']].viewValue}}
+                        </div>
+                    </mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="NumberOfDay">
+                    <mat-header-cell class="header-cell" *matHeaderCellDef>
+                        Number Of Day
+                    </mat-header-cell>
+
+                    <mat-cell *matCellDef="let request; index as i" class="row-cell">
+                        {{ request['numberOfDay'] }}
+                    </mat-cell>
+                </ng-container>
+
+
+                <ng-container matColumnDef="Approvers">
+                    <mat-header-cell class="header-cell" *matHeaderCellDef>
+                        Approvers
+                    </mat-header-cell>
+
+                    <mat-cell *matCellDef="let request;" class="row-cell">
+                        <mat-select [placeholder]="request['leaveRequestApprovers'].length">
+                            <mat-option *ngFor="let approver of request['leaveRequestApprovers']">
+                                {{ approver['user']['displayName'] }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-cell>
+                </ng-container>
+
+                <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+                <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+              </mat-table>
+
+                <h6 *ngIf="!isLoadingLeaveTypes && !isLoading && filteredData.length === 0" style="text-align: center;padding: 1em;">There is nothing to show</h6>
+
+                <mat-paginator
+                    #paginator
+                    [pageSize]="pageSizes[0]"
+                    [pageSizeOptions]="pageSizes"
+                    showFirstLastButtons>
+                </mat-paginator>
+        </mat-tab>
+
+        <mat-tab label="LEAVE SUMMARY">
+            <app-summary-leave-tab></app-summary-leave-tab>
+        </mat-tab>
+
+      </mat-tab-group>
+    </div>
+  </div>
